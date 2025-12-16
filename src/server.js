@@ -12,21 +12,27 @@ dotenv.config();
 const app = express();
 
 /* -----------------------------
-   CORS CONFIG (IMPORTANT)
+   BODY PARSER
+----------------------------- */
+app.use(express.json());
+
+/* -----------------------------
+   CORS CONFIG (FIXED FOR RAILWAY + NETLIFY)
 ----------------------------- */
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL
-      : "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://adarshanaik.netlify.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-/* -----------------------------
-   MIDDLEWARES
------------------------------ */
-app.use(express.json());
+/* IMPORTANT: allow preflight requests */
+app.options("*", cors());
 
 /* -----------------------------
    ROUTES
