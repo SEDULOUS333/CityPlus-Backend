@@ -27,7 +27,6 @@ app.use(
    MIDDLEWARES
 ----------------------------- */
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
 
 /* -----------------------------
    ROUTES

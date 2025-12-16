@@ -1,26 +1,4 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
 import Report from "../models/Report.js";
-
-/* ---------------------------------------------------
-   MULTER CONFIG
---------------------------------------------------- */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = "uploads/";
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath);
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `report_${Date.now()}${ext}`);
-  },
-});
-
-export const upload = multer({ storage });
 
 /* ---------------------------------------------------
    CREATE REPORT (NO AI)
@@ -35,7 +13,8 @@ export const createReport = async (req, res) => {
         .json({ message: "Description and coordinates are required" });
     }
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
+    // Cloudinary gives full URL in req.file.path
+    const imageUrl = req.file ? req.file.path : "";
 
     const newReport = await Report.create({
       userId: req.user ? req.user.id : null,
@@ -48,7 +27,7 @@ export const createReport = async (req, res) => {
         coordinates: [parseFloat(lng), parseFloat(lat)],
       },
 
-      // AI fields kept for UI compatibility (neutral values)
+      // AI fields kept for UI compatibility (unchanged)
       aiImageType: "n/a",
       aiTextType: "n/a",
       aiFinalType: type,
@@ -125,7 +104,7 @@ export const updateReportStatus = async (req, res) => {
 };
 
 /* ---------------------------------------------------
-   DELETE REPORT (OWNER ONLY)
+   DELETE REPORT (OWNER / ADMIN)
 --------------------------------------------------- */
 export const deleteReport = async (req, res) => {
   try {
@@ -136,7 +115,7 @@ export const deleteReport = async (req, res) => {
       return res.status(404).json({ message: "Report not found" });
     }
 
-     if (
+    if (
       report.userId?.toString() !== req.user.id &&
       req.user.role !== "admin"
     ) {
@@ -145,10 +124,9 @@ export const deleteReport = async (req, res) => {
         .json({ message: "Not authorized to delete this report" });
     }
 
-    if (report.imageUrl) {
-      const filePath = report.imageUrl.replace("/", "");
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
+    // NOTE:
+    // We do NOT delete Cloudinary image here
+    // to avoid accidental deletion of shared assets
 
     await report.deleteOne();
 

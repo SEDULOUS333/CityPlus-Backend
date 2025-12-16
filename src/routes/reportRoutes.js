@@ -5,9 +5,9 @@ import {
   getMyReports,
   updateReportStatus,
   deleteReport,
-  upload,
 } from "../controllers/reportController.js";
 
+import upload from "../middleware/uploadMiddleware.js";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
